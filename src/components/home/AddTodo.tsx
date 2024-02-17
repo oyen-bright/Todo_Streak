@@ -1,31 +1,41 @@
 import { FC, useState } from "react";
 import {
+  Box,
   Button,
-
   Card,
   TextField,
   useTheme,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import AddTodoModel from "./AddTodoModel";
 
 const AddTodo: FC = () => {
-    const [task, setTask] = useState<string>("");
-    const theme = useTheme();
-    function handleAddTask() {
-      // Add logic to handle adding a new task
-    }
-  
-    return (
+  const [task, setTask] = useState<string>("");
+  const theme = useTheme();
+  const [openAddTodoModal, setOpenAddTodoModal] = useState(false);
+
+
+
+  const handleClose = () => {
+
+
+    setOpenAddTodoModal(false);
+  };
+
+  function handleAddTask() {
+    setOpenAddTodoModal(true);
+  }
+
+  return (
+    <Box component="div">
       <Card
-      
-      elevation={10}
+        elevation={10}
         sx={{
-          margin:"0",
+          margin: "0",
           display: "flex",
           alignItems: "center",
           padding: "2px 10px",
           backgroundColor: theme.palette.primary.main,
-
           color: "#fff",
         }}
       >
@@ -56,7 +66,11 @@ const AddTodo: FC = () => {
           </Button>
         )}
       </Card>
-    );
-  };
+      {openAddTodoModal && (
+        <AddTodoModel open={openAddTodoModal} title={task} handleClose={handleClose} />
+      )}
+    </Box>
+  );
+};
 
-  export default AddTodo;
+export default AddTodo;
