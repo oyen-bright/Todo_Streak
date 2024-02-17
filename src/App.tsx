@@ -1,45 +1,22 @@
-import { useLocation, Outlet, RouterProvider, createBrowserRouter  } from "react-router-dom";
-import {useEffect} from "react"
+import { RouterProvider } from "react-router-dom";
+import AppRouter from "./routes/AppRouter";
 
-import Home from './pages/home';
-import Settings from './pages/settings';
+import { ThemeProvider } from "@mui/material/styles";
+import theme from "./theme/theme";
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+
 function App() {
+  return (
+    <ThemeProvider theme={theme}>
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
 
-    const Layout = () => {
-        const path = useLocation().pathname;
+    
+      <RouterProvider router={AppRouter} />
+      </LocalizationProvider>
 
-        useEffect(() => {
-            window.scrollTo(0,0)
-        }, [path])
-
-        return (
-            <Outlet />
-        )
-    }
-
-
-    const router = createBrowserRouter([
-        {
-            path: "/",
-            element: <Layout />,
-            children: [
-                {
-                    path: "/",
-                    element:<Home/>
-                }, 
-                {
-                    path: "/settings",
-                    element:<Settings/>
-                }
-            ]
-        }
-
-        
-    ])
-
-    return <RouterProvider router={router} />;
-  
+    </ThemeProvider>
+  );
 }
 
-
-export default App
+export default App;

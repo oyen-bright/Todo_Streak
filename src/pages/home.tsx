@@ -1,11 +1,22 @@
-import {FC} from 'react';
+import AddTodo from "../components/home/AddTodo";
+import TodoList from "../components/home/TodoList";
+import { FC,  } from "react";
 
-const Home:FC = () => {
+import {
+  Container,
+
+} from "@mui/material";
+
+
+const Home: FC = () => {
+  const numberOfTasks = 20; 
+
   return (
-    <div>
-      
-    </div>
-  )
-}
+    <Container>
+      <TodoList numberOfTasks={numberOfTasks} />
+      <AddTodo />
+    </Container>
+  );
+};
 
-export default Home
+export default Home;
