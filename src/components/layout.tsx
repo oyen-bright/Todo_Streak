@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { useLocation, Outlet } from "react-router-dom";
 import { Link } from "react-router-dom";
+import { useDate } from "../contexts/DateContext";
+import dayjs from "dayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { MdSettings, MdArrowBack } from "react-icons/md";
 import {
   AppBar,
@@ -12,12 +15,22 @@ import {
 } from "@mui/material";
 
 const Layout = () => {
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const { appDate: currentDate, setAppDate: setCurrentDate } = useDate();
+  const [selectedDate, selectedDateState] = useState<Date>(currentDate);
+
+  const handleDateChange = (date: Date | null) => {
+    if (date !== null) {
+      selectedDateState(date);
+
+      setCurrentDate(date);
+    }
+  };
 
   const containerStyles = {
     backgroundImage: "url(https://i.imgur.com/YgSfSQI.png)",
     backgroundSize: "cover",
     backgroundPosition: "center",
+    paddingBottom: "10px",
     minWidth: "100vW",
     backgroundAttachment: "fixed",
     minHeight: "100vh",
@@ -49,7 +62,7 @@ const Layout = () => {
                 </Typography>
                 {path !== "/settings" && (
                   <Typography variant="subtitle1" component="div">
-                    {selectedDate?.toLocaleDateString("en-US", {
+                    {currentDate?.toLocaleDateString("en-US", {
                       weekday: "long",
                       year: "numeric",
                       month: "long",
@@ -59,6 +72,30 @@ const Layout = () => {
                 )}
               </Grid>
               <Grid item xs />
+              {path !== "/settings" && (
+                <Grid item>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                    }}
+                  >
+                    <DatePicker
+                      sx={{
+                        color: "text.primary",
+                        fontSize: 34,
+                        fontWeight: "medium",
+                      }}
+                      value={dayjs(selectedDate)}
+                      onChange={(newValue) =>
+                        handleDateChange(newValue?.toDate() ?? null)
+                      }
+                    />
+                  </div>
+                </Grid>
+              )}
+
               {path !== "/settings" && (
                 <Grid item>
                   <IconButton component={Link} to="/settings" color="inherit">

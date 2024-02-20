@@ -9,11 +9,11 @@ import {
 
 
 const Home: FC = () => {
-  const numberOfTasks = 20; 
+
 
   return (
     <Container>
-      <TodoList numberOfTasks={numberOfTasks} />
+      <TodoList   />
       <AddTodo />
     </Container>
   );

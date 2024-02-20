@@ -1,6 +1,7 @@
 import { useTheme } from "@mui/material";
-
-import React, { ReactEventHandler, useState } from "react";
+import { Todo, TodoType } from "../../types/Todo";
+import { convertDayToNumber } from "../../utils/dateUtils";
+import React, { useState } from "react";
 import {
   Button,
   Dialog,
@@ -17,7 +18,12 @@ import {
   CircularProgress,
   RadioGroup,
   TextField,
+  Box,
 } from "@mui/material";
+import { useFirestore } from "../../services/firebase/useFirestore";
+import CustomAlertDialog from "../alert";
+import { useDate } from "../../contexts/DateContext";
+
 interface AddTodoModelProps {
   open: boolean;
   handleClose: () => void;
@@ -30,14 +36,22 @@ const AddTodoModel: React.FC<AddTodoModelProps> = ({
   title,
 }) => {
   const theme = useTheme();
+  const { addTodo } = useFirestore();
+  const { appDate } = useDate();
 
-  const [trackingType, setTrackingType] = useState<string>("daily");
+  const [trackingType, setTrackingType] = useState<TodoType>(TodoType.daily);
   const [todoTitle, setTodoTile] = useState<string>(title);
   const [frequency, setFrequency] = useState<number>(1);
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-
-  const [error, setError] = useState<{
+  const [alertMessage, setAlertMessage] = useState<{
+    showDialog: boolean;
+    message: string;
+  }>({
+    showDialog: false,
+    message: "",
+  });
+  const [formError, setError] = useState<{
     frequencyError: string | null;
     todoTitleError: string | null;
   }>({
@@ -45,13 +59,23 @@ const AddTodoModel: React.FC<AddTodoModelProps> = ({
     todoTitleError: null,
   });
 
+  const availableDays: string[] = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+  ];
+
   const onModalClose = (_: object, reason: string) => {
     if (reason === "backdropClick" && loading) return;
     handleClose();
   };
 
   const handleTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setTrackingType(event.target.value);
+    setTrackingType(event.target.value as TodoType);
   };
 
   const handleTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,50 +97,72 @@ const AddTodoModel: React.FC<AddTodoModelProps> = ({
     }
   };
 
+  const onFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    setError({ frequencyError: null, todoTitleError: null });
+
+    event.preventDefault();
+
+    if (trackingType === TodoType.daily && selectedDays.length === 0) {
+      setError({
+        ...formError,
+        frequencyError:
+          "Please select at least one day to track your daily habit.",
+      });
+      return;
+    }
+
+    if (!(todoTitle as string).trim()) {
+      setError({
+        ...formError,
+        todoTitleError: "Todo Cannot be empty",
+      });
+      return;
+    }
+    const newTodo: Todo = {
+      id: "",
+      createdDate: appDate.toISOString(),
+      updatedDate: appDate.toISOString(),
+      title: todoTitle as string,
+
+      type: trackingType,
+      frequency: trackingType === TodoType.weekly ? frequency : null,
+      days:
+        trackingType === TodoType.daily
+          ? selectedDays.map((e: string) => convertDayToNumber(e))
+          : null,
+
+      tracking: null,
+    };
+
+    try {
+      setLoading(true);
+      await addTodo(newTodo);
+      setLoading(false);
+      handleClose();
+    } catch (error) {
+      if (error instanceof Error) {
+        setLoading(false);
+        setAlertMessage({
+          showDialog: true,
+          message: error.message,
+        });
+      } else {
+        setLoading(false);
+      }
+    }
+
+    setLoading(false);
+  };
+
   return (
-    <React.Fragment>
+    <Box component="div">
       <Dialog
         open={open}
         onClose={onModalClose}
         disableEscapeKeyDown={true}
         PaperProps={{
           component: "form",
-
-          onSubmit: (event: React.FormEvent<HTMLFormElement>) => {
-            setError({ frequencyError: null, todoTitleError: null });
-            setLoading(true);
-            event.preventDefault();
-            //TODO:prpoper validation
-            const formData = new FormData(event.currentTarget);
-            const formJson = Object.fromEntries(formData.entries());
-            const todo = formJson.Todo;
-            console.log(todo as string);
-
-            if (
-              trackingType === "weekly" &&
-              selectedDays.length !== frequency
-            ) {
-              setError({
-                ...error,
-                frequencyError:
-                  "Please select the correct number of days according to the frequency.",
-              });
-              return;
-            }
-
-            if (!(todo as string).trim()) {
-              setError({
-                ...error,
-                todoTitleError: "Todo Cannot be empty",
-              });
-              return;
-            }
-
-            setTimeout(() => {
-              setLoading(false);
-              handleClose();
-            }, 1000); //
-          },
+          onSubmit: onFormSubmit,
         }}
       >
         <DialogTitle>Add Todo</DialogTitle>
@@ -153,8 +199,8 @@ const AddTodoModel: React.FC<AddTodoModelProps> = ({
             onChange={handleTitleChange}
             value={todoTitle}
             fullWidth
-            error={!!error.todoTitleError}
-            helperText={error.todoTitleError}
+            error={!!formError.todoTitleError}
+            helperText={formError.todoTitleError}
             variant="standard"
           />
           <FormControl component="fieldset" margin="dense">
@@ -166,19 +212,25 @@ const AddTodoModel: React.FC<AddTodoModelProps> = ({
               onChange={handleTypeChange}
             >
               <FormControlLabel
-                value="daily"
+                value={TodoType.daily}
                 control={<Radio />}
-                label="Daily"
+                label={
+                  TodoType.daily.charAt(0).toUpperCase() +
+                  TodoType.daily.slice(1)
+                }
               />
               <FormControlLabel
-                value="weekly"
+                value={TodoType.weekly}
                 control={<Radio />}
-                label="Weekly"
+                label={
+                  TodoType.weekly.charAt(0).toUpperCase() +
+                  TodoType.weekly.slice(1)
+                }
               />
             </RadioGroup>
           </FormControl>
 
-          {trackingType === "weekly" && (
+          {trackingType === TodoType.weekly && (
             <TextField
               margin="dense"
               id="frequency"
@@ -192,19 +244,11 @@ const AddTodoModel: React.FC<AddTodoModelProps> = ({
               onChange={handleFrequencyChange}
             />
           )}
-          {trackingType === "weekly" && (
+          {trackingType === TodoType.daily && (
             <FormControl component="fieldset" margin="dense">
               <FormLabel component="legend">Days</FormLabel>
               <div>
-                {[
-                  "Monday",
-                  "Tuesday",
-                  "Wednesday",
-                  "Thursday",
-                  "Friday",
-                  "Saturday",
-                  "Sunday",
-                ].map((day) => (
+                {availableDays.map((day) => (
                   <Chip
                     key={day}
                     label={day}
@@ -214,8 +258,10 @@ const AddTodoModel: React.FC<AddTodoModelProps> = ({
                     style={{ margin: "4px" }}
                   />
                 ))}
-                {error.frequencyError && (
-                  <Typography color="error">{error.frequencyError}</Typography>
+                {formError.frequencyError && (
+                  <Typography color="error">
+                    {formError.frequencyError}
+                  </Typography>
                 )}
               </div>
             </FormControl>
@@ -223,12 +269,30 @@ const AddTodoModel: React.FC<AddTodoModelProps> = ({
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
-          <Button type="submit" variant="contained">
+          <Button
+            type="submit"
+            variant="contained"
+            sx={{ backgroundColor: theme.palette.primary.main }}
+          >
             Continue
           </Button>
         </DialogActions>
       </Dialog>
-    </React.Fragment>
+
+      {alertMessage.showDialog && (
+        <CustomAlertDialog
+          open={alertMessage.showDialog}
+          message={alertMessage.message}
+          severity="error"
+          onClose={() =>
+            setAlertMessage({
+              ...alertMessage,
+              showDialog: false,
+            })
+          }
+        />
+      )}
+    </Box>
   );
 };
 
