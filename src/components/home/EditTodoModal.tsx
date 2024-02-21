@@ -17,8 +17,8 @@ import {
   Box,
 } from "@mui/material";
 import CustomAlertDialog from "../alert";
-import { useFirestore } from "../../services/firebase/useFirestore";
 import { useDate } from "../../contexts/DateContext";
+import TodoService from "../../services/TodoService";
 
 interface EditTodoModalProps {
   open: boolean;
@@ -32,7 +32,7 @@ const EditTodoModal: React.FC<EditTodoModalProps> = ({
   todo,
 }) => {
   const theme = useTheme();
-  const { updateTodo } = useFirestore();
+
   const { appDate } = useDate();
   const [selectedDays, setSelectedDays] = useState<string[]>(
     (todo.days ?? []).map((e) => convertNumberToDay(e))
@@ -68,11 +68,9 @@ const EditTodoModal: React.FC<EditTodoModalProps> = ({
     if (reason === "backdropClick" && loading) return;
     handleClose();
   };
-
   const handleTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setTodoTitle(event.target.value);
   };
-
   const handleFrequencyChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -89,7 +87,6 @@ const EditTodoModal: React.FC<EditTodoModalProps> = ({
 
   const onFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     setError({ todoTitleError: null });
-
     event.preventDefault();
 
     if (!(todoTitle as string).trim()) {
@@ -98,7 +95,6 @@ const EditTodoModal: React.FC<EditTodoModalProps> = ({
       });
       return;
     }
-
     const updatedTodo: Todo = {
       ...todo,
       title: todoTitle as string,
@@ -109,23 +105,18 @@ const EditTodoModal: React.FC<EditTodoModalProps> = ({
 
     try {
       setLoading(true);
-
-      await updateTodo(updatedTodo);
-      setLoading(false);
+      await TodoService.updateTodo(updatedTodo);
       handleClose();
     } catch (error) {
       if (error instanceof Error) {
-        setLoading(false);
         setAlertMessage({
           showDialog: true,
           message: error.message,
         });
-      } else {
-        setLoading(false);
       }
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (

@@ -2,7 +2,7 @@ import { DateTime } from "./DateTimes";
 import { TodoType } from "./Todo";
 
 export type HabitTracker = {
-  lastUpdated:string;
+  lastUpdated: string;
   todoID: string;
   type: TodoType;
   progress: {
@@ -21,5 +21,3 @@ export type WeekProgress = {
   completedDates: DateTime[];
   frequency: number;
 };
-
-

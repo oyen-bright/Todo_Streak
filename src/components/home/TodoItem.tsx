@@ -11,53 +11,20 @@ import {
 import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import CustomAlertDialog from "../alert";
-import { useFirestore } from "../../services/firebase/useFirestore";
 import { Todo, TodoType } from "../../types/Todo";
 import { MdSettings } from "react-icons/md";
-
 import { useDate } from "../../contexts/DateContext";
 import { convertDate, convertNumberToDay } from "../../utils/dateUtils";
-import {
-  getDailyStreak,
-  getWeekStreak,
-  getWeeklyStreak,
-} from "../../utils/streakUtils";
-import { getTodoDateCompletion } from "../../utils/todoUtils";
 import EditTodoModal from "./EditTodoModal";
+import { DateTime } from "../../types/DateTimes";
+import HabitService from "../../services/HabitService";
 
 type TodoItemProps = {
   todo: Todo;
 };
 
 const TodoItem: React.FC<TodoItemProps> = ({ todo }) => {
-  const { appDate } = useDate();
   const theme = useTheme();
-  const { updateTodoHabit } = useFirestore();
-  const [loading, setLoading] = useState<boolean>(false);
-  const [openEditTodoModal, setOpenEditTodoModal] = useState(false);
-
-  const [error, setError] = useState<{
-    showDialog: boolean;
-    message: string;
-  }>({
-    showDialog: false,
-    message: "",
-  });
-  const currentDay = appDate.getDay();
-  const isCompleted = getTodoDateCompletion(todo, appDate);
-  const days = todo.days
-    ? todo.days.map(function (e) {
-        if (e === currentDay) {
-          return convertNumberToDay(e);
-        }
-      })
-    : [];
-  const dayLabel = days.find((label) => label !== undefined);
-  const { currentStreak, longestStreak } =
-    todo.type === TodoType.daily
-      ? getDailyStreak(todo, currentDay)
-      : getWeeklyStreak(todo);
-  const { completed, frequency } = getWeekStreak(todo, appDate);
   const useStyles = {
     card: {
       marginBottom: theme.spacing(2),
@@ -75,15 +42,36 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo }) => {
       marginBottom: theme.spacing(1),
     },
   };
+  const { appDate } = useDate();
+  const [loading, setLoading] = useState<boolean>(false);
+  const [openEditTodoModal, setOpenEditTodoModal] = useState(false);
+  const [error, setError] = useState<{
+    showDialog: boolean;
+    message: string;
+  }>({
+    showDialog: false,
+    message: "",
+  });
+  const currentDay: number = appDate.getDay();
+  const isCompleted: DateTime | null = HabitService.getCompletedDateTime(
+    todo,
+    appDate
+  );
+  const dayLabel: string[] = todo.days?.map((e) => convertNumberToDay(e)) ?? [];
+  const { currentStreak, longestStreak } =
+    todo.type === TodoType.daily
+      ? HabitService.getDailyStreak(todo, currentDay)
+      : HabitService.getWeeklyStreak(todo);
+  const { completed, frequency } = HabitService.getWeekStreak(todo, appDate);
 
-  const handleEditModelClose = () => {
+  const handleEditModalClose = () => {
     setOpenEditTodoModal(false);
   };
 
   const onCheck = async (todo: Todo) => {
     try {
       setLoading(true);
-      await updateTodoHabit(todo, appDate);
+      await HabitService.updateHabit(todo, appDate);
     } catch (error) {
       if (error instanceof Error) {
         setError({
@@ -131,7 +119,9 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo }) => {
                 }}
               >
                 <Typography variant="body1">🔄 Every:</Typography>
-                <Chip label={dayLabel} />
+                {dayLabel.map((label, index) => (
+                  <Chip key={index} label={label} />
+                ))}
               </Box>
             ) : (
               <Typography variant="body1">🔄 Repetition: Weekly</Typography>
@@ -194,7 +184,7 @@ const TodoItem: React.FC<TodoItemProps> = ({ todo }) => {
         <EditTodoModal
           open={openEditTodoModal}
           todo={todo}
-          handleClose={handleEditModelClose}
+          handleClose={handleEditModalClose}
         />
       )}
     </Box>

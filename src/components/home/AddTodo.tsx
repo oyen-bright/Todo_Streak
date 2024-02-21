@@ -1,7 +1,7 @@
 import { FC, useState } from "react";
 import { Box, Button, Card, TextField, useTheme } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import AddTodoModel from "./AddTodoModel";
+import AddTodoModal from "./AddTodoModal";
 
 const AddTodo: FC = () => {
   const [todoTitle, setTodoTitle] = useState<string>("");
@@ -12,7 +12,16 @@ const AddTodo: FC = () => {
     setTodoTitle("");
     setOpenAddTodoModal(false);
   };
-
+  const onInputFieldKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter") {
+      handleAddTask();
+    }
+  };
+  const onInputFieldChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setTodoTitle(e.target.value);
+  };
   function handleAddTask() {
     setOpenAddTodoModal(true);
   }
@@ -34,12 +43,8 @@ const AddTodo: FC = () => {
         <AddIcon />
         <TextField
           value={todoTitle}
-          onChange={(e) => setTodoTitle(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              handleAddTask();
-            }
-          }}
+          onChange={onInputFieldChange}
+          onKeyDown={onInputFieldKeyDown}
           fullWidth
           InputProps={{
             style: { color: "white", fontSize: "20px", padding: "5px" },
@@ -57,7 +62,7 @@ const AddTodo: FC = () => {
         )}
       </Card>
       {openAddTodoModal && (
-        <AddTodoModel
+        <AddTodoModal
           open={openAddTodoModal}
           title={todoTitle}
           handleClose={handleClose}

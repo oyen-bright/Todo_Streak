@@ -20,25 +20,33 @@ import {
   TextField,
   Box,
 } from "@mui/material";
-import { useFirestore } from "../../services/firebase/useFirestore";
 import CustomAlertDialog from "../alert";
 import { useDate } from "../../contexts/DateContext";
+import TodoService from "../../services/TodoService";
 
-interface AddTodoModelProps {
+interface AddTodoModalProps {
   open: boolean;
   handleClose: () => void;
   title: string;
 }
 
-const AddTodoModel: React.FC<AddTodoModelProps> = ({
+const availableDays: string[] = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
+
+const AddTodoModal: React.FC<AddTodoModalProps> = ({
   open,
   handleClose,
   title,
 }) => {
   const theme = useTheme();
-  const { addTodo } = useFirestore();
   const { appDate } = useDate();
-
   const [trackingType, setTrackingType] = useState<TodoType>(TodoType.daily);
   const [todoTitle, setTodoTile] = useState<string>(title);
   const [frequency, setFrequency] = useState<number>(1);
@@ -59,36 +67,22 @@ const AddTodoModel: React.FC<AddTodoModelProps> = ({
     todoTitleError: null,
   });
 
-  const availableDays: string[] = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
-  ];
-
   const onModalClose = (_: object, reason: string) => {
     if (reason === "backdropClick" && loading) return;
     handleClose();
   };
-
   const handleTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setTrackingType(event.target.value as TodoType);
   };
-
   const handleTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setTodoTile(event.target.value);
   };
-
   const handleFrequencyChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const value = parseInt(event.target.value);
     setFrequency(value);
   };
-
   const handleDaySelection = (day: string) => {
     if (selectedDays.includes(day)) {
       setSelectedDays(selectedDays.filter((d) => d !== day));
@@ -99,7 +93,6 @@ const AddTodoModel: React.FC<AddTodoModelProps> = ({
 
   const onFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     setError({ frequencyError: null, todoTitleError: null });
-
     event.preventDefault();
 
     if (trackingType === TodoType.daily && selectedDays.length === 0) {
@@ -123,7 +116,6 @@ const AddTodoModel: React.FC<AddTodoModelProps> = ({
       createdDate: appDate.toISOString(),
       updatedDate: appDate.toISOString(),
       title: todoTitle as string,
-
       type: trackingType,
       frequency: trackingType === TodoType.weekly ? frequency : null,
       days:
@@ -136,22 +128,18 @@ const AddTodoModel: React.FC<AddTodoModelProps> = ({
 
     try {
       setLoading(true);
-      await addTodo(newTodo);
-      setLoading(false);
+      await TodoService.addTodo(newTodo);
       handleClose();
     } catch (error) {
       if (error instanceof Error) {
-        setLoading(false);
         setAlertMessage({
           showDialog: true,
           message: error.message,
         });
-      } else {
-        setLoading(false);
       }
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -296,4 +284,4 @@ const AddTodoModel: React.FC<AddTodoModelProps> = ({
   );
 };
 
-export default AddTodoModel;
+export default AddTodoModal;

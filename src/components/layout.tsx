@@ -17,27 +17,14 @@ import {
 const Layout = () => {
   const { appDate: currentDate, setAppDate: setCurrentDate } = useDate();
   const [selectedDate, selectedDateState] = useState<Date>(currentDate);
+  const path: string = useLocation().pathname;
 
   const handleDateChange = (date: Date | null) => {
     if (date !== null) {
       selectedDateState(date);
-
       setCurrentDate(date);
     }
   };
-
-  const containerStyles = {
-    backgroundImage: "url(https://i.imgur.com/YgSfSQI.png)",
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    paddingBottom: "10px",
-    minWidth: "100vW",
-    backgroundAttachment: "fixed",
-    minHeight: "100vh",
-  };
-
-  const path: string = useLocation().pathname;
-
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [path]);
@@ -74,19 +61,8 @@ const Layout = () => {
               <Grid item xs />
               {path !== "/settings" && (
                 <Grid item>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                    }}
-                  >
+                  <div className="date-picker-wrapper">
                     <DatePicker
-                      sx={{
-                        color: "text.primary",
-                        fontSize: 34,
-                        fontWeight: "medium",
-                      }}
                       value={dayjs(selectedDate)}
                       onChange={(newValue) =>
                         handleDateChange(newValue?.toDate() ?? null)
@@ -110,6 +86,16 @@ const Layout = () => {
       </Container>
     </Container>
   );
+};
+
+const containerStyles = {
+  backgroundImage: "url(https://i.imgur.com/YgSfSQI.png)",
+  backgroundSize: "cover",
+  backgroundPosition: "center",
+  paddingBottom: "10px",
+  minWidth: "100vW",
+  backgroundAttachment: "fixed",
+  minHeight: "100vh",
 };
 
 export default Layout;
