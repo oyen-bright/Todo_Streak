@@ -7,7 +7,7 @@ This template provides a minimal setup to get React working in Vite with HMR and
 First, clone the repository:
 
 ```bash
-git clone https://github.com/your-username/todo-streak-app.git
+git clone https://github.com/oyen-bright/Todo_Streak.git
 cd todo-streak-app
 ```
 
