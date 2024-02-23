@@ -1,6 +1,10 @@
 import { DateTime } from "../types/DateTimes";
 
+// Function to convert day name to corresponding number
+
 export function convertDayToNumber(day: string): number {
+  // Map day names to numbers (0 for Sunday, 1 for Monday, ..., 6 for Saturday)
+
   switch (day.toLowerCase()) {
     case "monday":
       return 1;
@@ -21,7 +25,11 @@ export function convertDayToNumber(day: string): number {
   }
 }
 
+// Function to convert number to corresponding day name
+
 export function convertNumberToDay(number: number): string {
+  // Map numbers to day names (0 for Sunday, 1 for Monday, ..., 6 for Saturday)
+
   switch (number) {
     case 1:
       return "Monday";
@@ -42,7 +50,11 @@ export function convertNumberToDay(number: number): string {
   }
 }
 
+// Function to convert completed dates from DateTime format to array of objects with date and count
+
 export function convertCompletedDates(completedDates: DateTime[]) {
+  // Convert each completed date to an object with date and count properties
+
   return completedDates.map((completedDate) => {
     const [year, month, day] = completedDate.date.split("-").map(Number);
     return {
@@ -51,6 +63,8 @@ export function convertCompletedDates(completedDates: DateTime[]) {
     };
   });
 }
+
+// Function to get start and end of the week for a given date
 
 export function getStartAndEndOfWeek(date: Date): {
   startOfWeek: Date;
@@ -68,6 +82,8 @@ export function getStartAndEndOfWeek(date: Date): {
 
   return { startOfWeek, endOfWeek };
 }
+
+// Function to generate a unique key for the week based on its start and end dates
 
 export const generateUniqueKeyForWeek = (
   startOfWeek: Date,
@@ -89,6 +105,8 @@ export const generateUniqueKeyForWeek = (
   return `${startKey}-${endKey}`;
 };
 
+// Function to convert a date object to a formatted date and time string
+
 export function convertDate(day: Date): { date: string; time: string } {
   const formattedDate = formatDate(day);
   const currentDate = new Date();
@@ -102,6 +120,9 @@ export function convertDate(day: Date): { date: string; time: string } {
 
   return { date: formattedDate, time: formattedTime };
 }
+
+// Function to get the unique key for the week containing a given date
+
 export function getWeekKey(date: Date): string {
   const startEndOfWeek = getStartAndEndOfWeek(date);
   return generateUniqueKeyForWeek(
@@ -109,6 +130,8 @@ export function getWeekKey(date: Date): string {
     startEndOfWeek.endOfWeek
   );
 }
+
+// Function to format a date object as a string in "YYYY-MM-DD" format
 
 export const formatDate = (date: Date): string => {
   const year: number = date.getFullYear();
