@@ -22,7 +22,7 @@ To run the development server:
 npm run dev
 
 ```
-Open http://localhost:5173 to view the app in your browser.
+Open http://localhost:5173  or http://localhost:5174  to view the app in your browser.
 
 ## Overview
 This project is a Todo Streak app built with React, TypeScript, and Vite. It allows users to track their daily or weekly todos and maintain streaks for completing them. The app features include:
