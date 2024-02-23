@@ -10,22 +10,34 @@ import {
 } from "./FirebaseService";
 
 const HabitService = {
+  // Function to fetch habit data for a given todo ID
   getHabit: (todoID: string): Promise<HabitTracker> => {
     return getDocument<HabitTracker>(collection.habit, todoID);
   },
 
+  // Function to update habit  data when a todo is completed
+
   updateHabit: async (todo: Todo, date: Date): Promise<void> => {
     try {
+      // Convert date to app-specific format
       const appDateTime: DateTime = convertDate(date);
+
+      // Get completed dates for the habit
+
       const currentCompletedDate: DateTime[] | null = getHabitCompletedDates(
         todo,
         date
       );
 
       if (currentCompletedDate) {
+        // If the habit is not already completed for the given date
+
         if (
           !currentCompletedDate.some((item) => item.date === appDateTime.date)
         ) {
+          // Update completed dates and streaks based on todo type
+          // (daily or weekly)
+          // Update Firestore document with updated tracking data
           currentCompletedDate.push(appDateTime);
           const completedDateDate: string[] = currentCompletedDate.map(
             (e) => e.date
@@ -71,6 +83,8 @@ const HabitService = {
     }
   },
 
+  // Function to retrieve current and longest streaks for a daily habit
+
   getDailyStreak: (
     todo: Todo,
     currentDay: number
@@ -79,7 +93,10 @@ const HabitService = {
     let longestStreak = 0;
     const habit = todo.tracking?.progress.daily;
 
+    // if the day of the habit is present in the data
     if (habit && habit[currentDay]) {
+      // Calculate and return streak information
+
       const dailyProgress: DailyProgress = habit[currentDay];
       currentStreak = dailyProgress.currentStreak;
       longestStreak = dailyProgress.longestStreak;
@@ -90,6 +107,7 @@ const HabitService = {
       longestStreak,
     };
   },
+  // Function to retrieve current and longest streaks for a weekly habit
 
   getWeeklyStreak: (
     todo: Todo
@@ -99,6 +117,8 @@ const HabitService = {
     const habit = todo.tracking?.progress.weekly;
 
     if (habit) {
+      // Calculate and return streak information
+
       currentStreak = habit?.currentStreak as number;
       longestStreak = habit?.longestStreak as number;
     }
@@ -108,6 +128,8 @@ const HabitService = {
       longestStreak,
     };
   },
+
+  // Function to retrieve completed and frequency for a weekly habit in a given week
 
   getWeekStreak: (
     todo: Todo,
@@ -135,6 +157,8 @@ const HabitService = {
     };
   },
 
+  // Function to retrieve completed date-time for a todo on a specific date
+
   getCompletedDateTime: (todo: Todo, date: Date): DateTime | null => {
     const currentDay: number = date.getDay();
     const currentDateDateTime = convertDate(date);
@@ -149,6 +173,7 @@ const HabitService = {
       ].completedDates.find((e) => e.date === currentDateDateTime.date);
       return completionData ? completionData : null;
     }
+    // Retrieve and return completed date-time information
 
     if (todo.type === TodoType.weekly) {
       const weekProgress =
@@ -166,10 +191,14 @@ const HabitService = {
 
     return null;
   },
+  // Function to clear all habit data from Firestore
+
   clearData: async () => {
     return clearCollections(collection.habit);
   },
 };
+
+// Helper function to retrieve completed dates for a habit
 
 function getHabitCompletedDates(todo: Todo, date: Date): DateTime[] | null {
   const currentDay: number = date.getDay();
@@ -225,6 +254,8 @@ function getHabitCompletedDates(todo: Todo, date: Date): DateTime[] | null {
   return null;
 }
 
+// Helper function to calculate streaks for a weekly habit
+
 function calculateWeeklyStreaks(weekMap: Record<string, WeekProgress>): {
   currentStreak: number;
   longestStreak: number;
@@ -253,6 +284,8 @@ function calculateWeeklyStreaks(weekMap: Record<string, WeekProgress>): {
 
   return { currentStreak, longestStreak };
 }
+
+// Helper function to calculate longest streak for a daily habit
 
 function calculateDailyLongestStreak(completedDates: string[]): number {
   let longestStreak = 0;
@@ -287,6 +320,8 @@ function calculateDailyLongestStreak(completedDates: string[]): number {
   return longestStreak;
 }
 
+// Helper function to calculate current streak for a daily habit
+
 function calculateDailyCurrentStreak(completedDates: string[]): number {
   completedDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
 
@@ -316,6 +351,8 @@ function calculateDailyCurrentStreak(completedDates: string[]): number {
   return currentStreak;
 }
 
+// Helper function to update todo streak information
+
 function updateTodoStreak(
   todo: Todo,
   currentStreak: number,
@@ -331,6 +368,8 @@ function updateTodoStreak(
     todo.tracking.progress.daily[currentDay].currentStreak = currentStreak;
     todo.tracking.progress.daily[currentDay].longestStreak = longestStreak;
   }
+  // Update todo streak information based on type (daily or weekly)
+  // Return updated todo
 
   if (todo.type === TodoType.weekly && todo.tracking?.progress.weekly) {
     todo.tracking.progress.weekly.currentStreak = currentStreak;

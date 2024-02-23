@@ -14,6 +14,8 @@ import { DailyProgress, HabitTracker, WeekProgress } from "../types/Habit";
 import { getWeekKey } from "../utils/dateUtils";
 
 const TodoService = {
+  // Function to fetch all todos and their associated habit data
+
   getTodos: (callback: (todos: Todo[]) => void): Unsubscribe => {
     try {
       const unsubscribe = subscribeToCollection(
@@ -24,6 +26,8 @@ const TodoService = {
             snapshot.docs.map(async (data) => {
               const todo = data.data() as Todo;
               if (todo.id !== "") {
+                // Fetch associated habit  data
+
                 const todoHabit: HabitTracker = await HabitService.getHabit(
                   todo.id
                 );
@@ -43,9 +47,15 @@ const TodoService = {
     }
   },
 
+  // Function to update a todo and its associated habit data
+
   updateTodo: async (NewTodo: Todo) => {
     try {
+      // Retrieve week key for the given todo update date
+
       const weekKey = getWeekKey(new Date(NewTodo.updatedDate));
+
+      // Handle updates for daily todos
 
       if (NewTodo.type === TodoType.daily) {
         NewTodo.days?.forEach((e) => {
@@ -57,6 +67,8 @@ const TodoService = {
             NewTodo.tracking?.progress.daily !== null &&
             NewTodo.tracking?.progress.daily[e] === undefined
           ) {
+            // Initialize daily progress for each specified day if not already present
+
             NewTodo.tracking!.progress.daily[e] = {
               completedDates: [],
               longestStreak: 0,
@@ -66,6 +78,8 @@ const TodoService = {
         });
       }
 
+      // Handle updates for weekly todos
+
       if (NewTodo.type === TodoType.weekly) {
         const weekProgress =
           (
@@ -74,6 +88,7 @@ const TodoService = {
               WeekProgress
             >
           )[weekKey] ?? null;
+        // Update or initialize weekly progress data for the given week key
 
         if (!weekProgress) {
           if (NewTodo.tracking?.progress.weekly) {
@@ -101,6 +116,8 @@ const TodoService = {
         }
       }
 
+      // Update habit tracking data and todo document in Firestore
+
       if (NewTodo.tracking != null) {
         await updateDocument(collection.habit, NewTodo.id, NewTodo.tracking);
         await updateDocument(collection.todo, NewTodo.id, NewTodo);
@@ -111,8 +128,13 @@ const TodoService = {
     }
   },
 
+  // Function to add a new todo and its associated habit data
+
   addTodo: async (todo: Todo) => {
     try {
+      // Add todo document to Firestore
+      // Initialize habit tracking data for the new todo
+      // Update habit tracking document and todo document in Firestore
       const docRef = await addDocument(collection.todo, todo);
 
       const weekKey = getWeekKey(new Date(todo.createdDate));
@@ -158,9 +180,13 @@ const TodoService = {
     }
   },
 
+  // Function to filter todos based on creation date and type
+
   filterTodosByDate: (todos: Todo[], appDate: Date): Todo[] => {
     return todos
       .filter((todo) => {
+        // Filter todos based on creation date and type
+
         const createdDate = new Date(todo.createdDate);
         const currentDate = appDate;
         createdDate.setHours(0, 0, 0, 0);
@@ -184,10 +210,14 @@ const TodoService = {
         return createdOrEarlierThanGivenDate;
       })
       .map((todo) => {
+        // Map filtered todos and perform any additional processing
+
         //TODO:on Date change recalculate the steak for simulation if needed;
         return todo;
       });
   },
+
+  // Function to clear all todo data from Firestore
 
   clearData: async () => {
     return clearCollections(collection.todo);
